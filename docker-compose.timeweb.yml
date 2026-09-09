@@ -1,0 +1,27 @@
+# Timeweb App Platform (Docker Compose): без volumes и без встроенной БД.
+# Используйте Managed PostgreSQL из панели Timeweb и задайте DATABASE_URL в «Окружение».
+#
+# В панели: App Platform → Docker → Docker Compose → репозиторий qqqweqw.
+# Если платформа читает только docker-compose.yml — временно замените файл этим
+# или скопируйте содержимое в docker-compose.yml перед деплоем.
+#
+# web — первый серvice: на него идёт прокси и SSL от Timeweb.
+
+name: ratify
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        SITE_URL: ${SITE_URL}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_SSL: ${DATABASE_SSL:-true}
+      SITE_URL: ${SITE_URL}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_PROXY: ${TELEGRAM_PROXY:-}
