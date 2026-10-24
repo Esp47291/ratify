@@ -4,29 +4,33 @@ import { useState } from "react";
 import { X, CheckCircle, Loader2 } from "lucide-react";
 import { formatPhoneMask, isCompletePhone, normalizePhoneDigits } from "@/lib/phone";
 import { normalizeCompanyUrl } from "@/lib/url";
+import { services } from "@/lib/services-data";
 
 interface OrderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Название услуги, выбранной по умолчанию */
+  defaultService?: string;
 }
 
-export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
+const inputClass =
+  "w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm";
+const labelClass = "block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide";
+
+export default function OrderModal({ isOpen, onClose, defaultService = "" }: OrderModalProps) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
     companyUrl: "",
-    reviewCount: "",
+    service: defaultService,
+    message: "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
-
-  const handlePhoneChange = (value: string) => {
-    setForm({ ...form, phone: formatPhoneMask(value) });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +57,7 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
       });
       if (res.ok) {
         setSuccess(true);
-        setForm({ name: "", phone: "", email: "", companyUrl: "", reviewCount: "" });
+        setForm({ name: "", phone: "", email: "", companyUrl: "", service: defaultService, message: "" });
       } else {
         setError("Произошла ошибка. Попробуйте ещё раз.");
       }
@@ -70,22 +74,22 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
       style={{ background: "rgba(27,42,74,0.45)", backdropFilter: "blur(8px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="modal-content w-full max-w-lg bg-white border border-zinc-200 rounded-xl shadow-xl shadow-zinc-900/8 overflow-hidden">
-        {/* Header */}
+      <div className="modal-content w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-xl shadow-zinc-900/8">
         <div className="px-8 pt-8 pb-6 border-b border-zinc-200 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Заказать накрутку</h2>
-            <p className="text-zinc-500 text-sm mt-1">Ответим в течение 5 минут</p>
+            <h2 className="text-lg font-semibold text-zinc-900">Оставить заявку</h2>
+            <p className="text-zinc-500 text-sm mt-1">Свяжемся, уточним задачу и предложим решение</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Закрыть"
             className="w-8 h-8 rounded-md bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors flex-shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-8">
           {success ? (
             <div className="text-center py-8">
@@ -93,11 +97,8 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
                 <CheckCircle className="w-10 h-10 text-green-600" />
               </div>
               <h3 className="text-2xl font-bold text-zinc-900 mb-3">Заявка принята!</h3>
-              <p className="text-zinc-500 mb-8">Мы свяжемся с вами в течение 5 минут в рабочее время.</p>
-              <button
-                onClick={onClose}
-                className="btn-primary px-8 py-3"
-              >
+              <p className="text-zinc-500 mb-8">Мы свяжемся с вами в ближайшее время.</p>
+              <button onClick={onClose} className="btn-primary px-8 py-3">
                 <span>Закрыть</span>
               </button>
             </div>
@@ -105,29 +106,25 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide">
-                    Ваше имя *
-                  </label>
+                  <label className={labelClass}>Ваше имя *</label>
                   <input
                     type="text"
                     placeholder="Иван Иванов"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm"
+                    className={inputClass}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide">
-                    Телефон *
-                  </label>
+                  <label className={labelClass}>Телефон *</label>
                   <input
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
                     placeholder="+7 (999) 123-45-67"
                     value={form.phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    onChange={(e) => setForm({ ...form, phone: formatPhoneMask(e.target.value) })}
                     onFocus={() => {
                       if (!form.phone) setForm({ ...form, phone: "+7 (" });
                     }}
@@ -137,50 +134,59 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
                       }
                     }}
                     maxLength={18}
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm"
+                    className={inputClass}
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide">
-                  Email
-                </label>
+                <label className={labelClass}>Email</label>
                 <input
                   type="email"
                   placeholder="ivan@company.ru"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide">
-                  Ссылка на компанию на картах
-                </label>
+                <label className={labelClass}>Что вас интересует</label>
+                <select
+                  value={form.service}
+                  onChange={(e) => setForm({ ...form, service: e.target.value })}
+                  className={inputClass}
+                >
+                  <option value="">Пока не знаю, нужна консультация</option>
+                  {services.map((s) => (
+                    <option key={s.slug} value={s.title}>
+                      {s.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Сайт или карточка компании</label>
                 <input
                   type="text"
                   inputMode="url"
-                  placeholder="yandex.ru/maps/..."
+                  placeholder="example.com"
                   value={form.companyUrl}
                   onChange={(e) => setForm({ ...form, companyUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 mb-2 uppercase tracking-wide">
-                  Количество отзывов
-                </label>
-                <input
-                  type="number"
-                  placeholder="Например: 20"
-                  min="1"
-                  value={form.reviewCount}
-                  onChange={(e) => setForm({ ...form, reviewCount: e.target.value })}
-                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-900 placeholder-gray-400 focus:outline-none focus:border-[var(--accent)] focus:bg-zinc-100 transition-all text-sm"
+                <label className={labelClass}>Комментарий</label>
+                <textarea
+                  rows={3}
+                  placeholder="Коротко опишите задачу"
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  className={inputClass}
                 />
               </div>
 
@@ -195,9 +201,7 @@ export default function OrderModal({ isOpen, onClose }: OrderModalProps) {
                 disabled={loading}
                 className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : null}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                 <span>{loading ? "Отправляем..." : "Отправить заявку"}</span>
               </button>
 

@@ -6,13 +6,15 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}
       POSTGRES_DB: app_db
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    ports:
-      - "5432:5432"
+    # Порт БД НЕ публикуется наружу: web ходит в db по внутренней сети Docker.
+    # Для локальной отладки (psql, drizzle-kit studio) раскомментируйте — только localhost:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d app_db"]
       interval: 5s
@@ -23,19 +25,23 @@ services:
     build:
       context: .
       args:
-        SITE_URL: ${SITE_URL}
+        SITE_URL: ${SITE_URL:?Задайте SITE_URL в .env}
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/app_db
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/app_db
       DATABASE_SSL: "false"
       SITE_URL: ${SITE_URL}
+      SESSION_SECRET: ${SESSION_SECRET:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_PROXY: ${TELEGRAM_PROXY:-}
+    # Обход блокировки DNS для Telegram. IP можно переопределить в .env (TELEGRAM_API_IP),
+    # если адрес api.telegram.org сменится. Если на сервере Telegram доступен — удалите блок.
     extra_hosts:
-      - "api.telegram.org:149.154.167.220"
-      - "osx.telegram.org:149.154.167.220"
+      - "api.telegram.org:${TELEGRAM_API_IP:-149.154.167.220}"
+      - "osx.telegram.org:${TELEGRAM_API_IP:-149.154.167.220}"
     depends_on:
       db:
         condition: service_healthy

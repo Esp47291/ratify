@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
+import { services } from "@/lib/services-data";
 
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 const routes = [
   "/",
   "/about",
-  "/cases",
   "/contacts",
   "/faq",
   "/guarantees",
@@ -13,14 +13,7 @@ const routes = [
   "/offer",
   "/prices",
   "/privacy",
-  "/services/yandex",
-  "/services/google",
-  "/services/2gis",
-  "/services/zoon",
-  "/services/avito",
-  "/services/yandex-business",
-  "/services/yandex-direct",
-  "/services/other",
+  ...services.map((s) => `/services/${s.slug}`),
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

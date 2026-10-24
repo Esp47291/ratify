@@ -5,17 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X, ArrowUpRight } from "lucide-react";
 import { TELEGRAM_URL } from "@/lib/contacts";
+import { services as serviceList } from "@/lib/services-data";
 
-const services = [
-  { name: "Яндекс.Карты", href: "/services/yandex", price: "от 350 ₽" },
-  { name: "Google Карты", href: "/services/google", price: "от 150 ₽" },
-  { name: "2ГИС", href: "/services/2gis", price: "от 120 ₽" },
-  { name: "Zoon", href: "/services/zoon", price: "от 150 ₽" },
-  { name: "Авито", href: "/services/avito", price: "от 1300 ₽" },
-  { name: "Ежемесячная поддержка — Яндекс.Бизнес", href: "/services/yandex-business", price: "от 9 900 ₽/мес" },
-  { name: "Настройка Яндекс.Директа", href: "/services/yandex-direct", price: "Индивидуально" },
-  { name: "Другие площадки", href: "/services/other", price: "Индивидуально" },
-];
+const services = serviceList.map((s) => ({
+  name: s.title,
+  href: `/services/${s.slug}`,
+  price: s.price,
+}));
 
 export default function Header() {
   const pathname = usePathname();
@@ -73,7 +69,6 @@ export default function Header() {
               { name: "Цены", href: "/prices" },
               { name: "Калькулятор", href: "/calculator" },
               { name: "Гарантии", href: "/guarantees" },
-              { name: "Кейсы", href: "/cases" },
               { name: "О нас", href: "/about" },
               { name: "Контакты", href: "/contacts" },
               { name: "FAQ", href: "/faq" },
@@ -147,7 +142,6 @@ export default function Header() {
               { name: "Цены", href: "/prices" },
               { name: "Калькулятор", href: "/calculator" },
               { name: "Гарантии", href: "/guarantees" },
-              { name: "Кейсы", href: "/cases" },
               { name: "О нас", href: "/about" },
               { name: "Контакты", href: "/contacts" },
               { name: "FAQ", href: "/faq" },

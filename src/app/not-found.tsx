@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ArrowLeft, Star } from "lucide-react";
 
 export default function NotFound() {
@@ -15,7 +15,7 @@ export default function NotFound() {
         </div>
         <h1 className="text-4xl font-bold text-zinc-900 mb-4">Страница не найдена</h1>
         <p className="text-zinc-500 mb-10 max-w-md mx-auto">
-          Похоже, вы зашли не туда. Но не расстраивайтесь — вернитесь на главную и закажите накрутку отзывов!
+          Похоже, вы зашли не туда. Вернитесь на главную — там все наши услуги и контакты.
         </p>
         <Link
           href="/"

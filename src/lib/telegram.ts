@@ -9,18 +9,17 @@ export type LeadNotification = {
   phone?: string | null;
   email?: string | null;
   companyUrl?: string | null;
-  reviewCount?: number | null;
+  service?: string | null;
+  budget?: string | null;
   message?: string | null;
   type?: string | null;
 };
 
 const TYPE_LABELS: Record<string, string> = {
   order: "Заказ",
-  checklist: "Чеклист",
   contact: "Контакты",
   calculator: "Калькулятор",
-  exit: "Exit-intent",
-  exit_intent: "Подарочные отзывы",
+  exit_intent: "Окно при уходе",
 };
 
 const TELEGRAM_HOST = "api.telegram.org";
@@ -59,7 +58,8 @@ function formatLeadMessage(lead: LeadNotification): string {
     lead.phone ? `<b>Телефон:</b> ${escapeHtml(lead.phone)}` : null,
     lead.email ? `<b>Email:</b> ${escapeHtml(lead.email)}` : null,
     lead.companyUrl ? `<b>Ссылка:</b> ${escapeHtml(lead.companyUrl)}` : null,
-    lead.reviewCount != null ? `<b>Отзывов:</b> ${lead.reviewCount}` : null,
+    lead.service ? `<b>Услуга:</b> ${escapeHtml(lead.service)}` : null,
+    lead.budget ? `<b>Бюджет:</b> ${escapeHtml(lead.budget)}` : null,
     lead.message ? `<b>Сообщение:</b>\n${escapeHtml(lead.message)}` : null,
   ];
 

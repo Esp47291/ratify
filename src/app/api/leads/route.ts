@@ -4,25 +4,37 @@ import { leads } from "@/db/schema";
 import { notifyTelegramLead } from "@/lib/telegram";
 import { normalizeCompanyUrl } from "@/lib/url";
 
+const LEAD_TYPES = new Set(["order", "contact", "calculator", "exit_intent"]);
+
+/** Приводит значение к обрезанной строке или null. */
+function clean(value: unknown, max: number): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, max) : null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, phone, email, companyUrl, reviewCount, message, type } = body;
 
+    const name = clean(body?.name, 120);
     if (!name) {
       return NextResponse.json({ error: "Имя обязательно" }, { status: 400 });
     }
 
-    const normalizedUrl = companyUrl ? normalizeCompanyUrl(String(companyUrl)) : "";
+    const rawUrl = clean(body?.companyUrl, 500);
+    const normalizedUrl = rawUrl ? normalizeCompanyUrl(rawUrl) : "";
+    const rawType = clean(body?.type, 30) ?? "order";
 
     const payload = {
       name,
-      phone: phone || null,
-      email: email || null,
+      phone: clean(body?.phone, 30),
+      email: clean(body?.email, 200),
       companyUrl: normalizedUrl || null,
-      reviewCount: reviewCount ? parseInt(reviewCount, 10) : null,
-      message: message || null,
-      type: type || "order",
+      service: clean(body?.service, 120),
+      budget: clean(body?.budget, 60),
+      message: clean(body?.message, 2000),
+      type: LEAD_TYPES.has(rawType) ? rawType : "order",
     };
 
     let leadId: number | undefined;
@@ -41,10 +53,7 @@ export async function POST(request: Request) {
     });
 
     if (!leadId && !telegramOk) {
-      return NextResponse.json(
-        { error: "Ошибка сервера" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -55,9 +64,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error handling lead:", error);
-    return NextResponse.json(
-      { error: "Ошибка сервера" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
   }
 }

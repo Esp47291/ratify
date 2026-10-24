@@ -1,6 +1,6 @@
 # ratify
 
-Сайт накрутки отзывов (Яндекс.Карты, Google Maps, 2ГИС, Zoon, Авито и др.).
+Сайт маркетингового агентства: Яндекс.Директ, SEO-продвижение, аудит сайта и продукта, ведение карточки в Яндекс.Бизнесе. Заявки с форм сохраняются в PostgreSQL и приходят в Telegram. Контекст и правила работы — в `CLAUDE.md`.
 
 ---
 
@@ -30,7 +30,7 @@ docker compose down -v         # остановить и стереть данн
 
 На Linux/Mac вместо `copy` используй `cp .env.example .env`.
 
-Перед запуском в `.env` можно поменять `SITE_URL` (публичный адрес сайта). База в Docker уже настроена сама.
+Перед запуском в `.env` обязательно задай `SITE_URL` и `POSTGRES_PASSWORD`. Порт базы наружу не открыт — сайт ходит в неё по внутренней сети Docker. Для локальной отладки раскомментируй `ports` у сервиса `db` в `docker-compose.yml` (только `127.0.0.1`).
 
 ---
 
@@ -43,11 +43,10 @@ docker compose down -v         # остановить и стереть данн
 | `Dockerfile` | Рецепт образа сайта (сборка Next.js) |
 | `docker-compose.yml` | Запуск **сайта + PostgreSQL** одной командой (обычный VPS / локально) |
 | `docker-compose.timeweb.yml` | Только сайт, без своей БД — для Timeweb (база из панели) |
-| `.env.example` | Шаблон настроек. Копируешь в `.env` |
+| `.env.example` | Шаблон настроек. Копируешь в `.env` и заполняешь (пароль БД и секрет сессий генерируются через `openssl rand -hex 24`) |
 | `.env` | Реальные секреты и адреса. **Не коммить в git** |
 | `package.json` | Список npm-пакетов и скриптов (аналог requirements для Node) |
 | `package-lock.json` | Точные версии пакетов |
-| `requirements.txt` | Краткий список: что нужно поставить и какие пакеты внутри |
 | `next.config.ts` | Настройки Next.js |
 | `drizzle.config.ts` | Настройки ORM (схема БД) |
 | `tsconfig.json` | Настройки TypeScript |
@@ -59,11 +58,11 @@ docker compose down -v         # остановить и стереть данн
 | Имя | Зачем |
 |-----|--------|
 | `src/app/` | Страницы сайта и API (роутинг Next.js) |
-| `src/app/api/leads/` | Приём заявок с форм |
+| `src/app/api/leads/` | Приём заявок с форм (имя, телефон, услуга, сайт, комментарий) |
 | `src/app/api/health/` | Проверка «сайт жив + БД отвечает» |
-| `src/components/` | Кнопки, шапка, модалки, калькулятор |
+| `src/components/` | Шапка, подвал, форма заявки, калькулятор бюджета |
 | `src/db/` | Таблицы и подключение к PostgreSQL |
-| `src/lib/` | Утилиты (Telegram, ссылки, телефоны) |
+| `src/lib/` | Данные услуг (`services-data.ts`), расчёт бюджета, Telegram, ссылки, телефоны |
 | `public/` | Картинки и иконки, которые отдаются как есть |
 | `scripts/` | SQL для создания таблиц, скрипты деплоя |
 | `icons/` | Исходники иконок (дубли в `public/icons`) |
@@ -73,31 +72,35 @@ docker compose down -v         # остановить и стереть данн
 | Имя | Что это |
 |-----|---------|
 | `web` | Контейнер сайта, порт **3000** |
-| `db` | PostgreSQL 16, порт **5432**, база `app_db` |
+| `db` | PostgreSQL 16, база `app_db`, наружу не публикуется |
 | `pgdata` | Том: данные базы не пропадают после `docker compose down` |
 
 ### Переменные в `.env`
 
 | Имя | Обязательно | Что значит |
 |-----|-------------|------------|
-| `SITE_URL` | да | Публичный URL сайта **без** `/` в конце, например `http://72.56.232.108:3000` |
-| `DATABASE_URL` | да* | Строка к Postgres. *В Docker Compose для `web` подставляется сама: `postgresql://postgres:postgres@db:5432/app_db` |
+| `SITE_URL` | да | Публичный URL сайта **без** `/` в конце, например `https://example.com` |
+| `POSTGRES_PASSWORD` | да (Docker) | Пароль PostgreSQL в `docker-compose.yml`. Только буквы и цифры |
+| `DATABASE_URL` | да* | Строка к Postgres. *В Docker Compose для `web` собирается сама из `POSTGRES_PASSWORD`. Нужна для запуска без Docker и для `drizzle-kit` |
+| `SESSION_SECRET` | после перехода на маркетплейс | Секрет подписи сессий |
 | `DATABASE_SSL` | нет | `true` — если база на хостинге со SSL. В локальном Docker — `false` |
 | `PORT` | нет | Порт на хосте (по умолчанию `3000`) |
 | `TELEGRAM_BOT_TOKEN` | нет | Токен бота от @BotFather. Пусто = уведомления выключены |
 | `TELEGRAM_CHAT_ID` | нет | Куда слать заявки (чат/группа) |
 | `TELEGRAM_PROXY` | нет | Прокси до Telegram, если `api.telegram.org` недоступен |
+| `TELEGRAM_API_IP` | нет | IP для обхода блокировки DNS в `docker-compose.yml` (по умолчанию известный адрес) |
+| `DEV_ORIGINS` | нет | Адреса локальной сети для dev-сервера через запятую |
 
 ---
 
 ## Что нужно (requirements)
 
-Полный список: **`requirements.txt`**.
+Список пакетов — в `package.json`.
 
 Кратко:
 
 - **Через Docker:** Docker + Docker Compose. Node и Postgres ставить не нужно.
-- **Без Docker:** Node.js 20+, npm, PostgreSQL 16+.
+- **Без Docker:** Node.js 22+, npm, PostgreSQL 16+.
 - Пакеты сайта ставятся командой `npm install` из `package.json` (Next.js, React, Drizzle, pg и т.д.).
 
 ---
@@ -152,11 +155,11 @@ npm run dev
 docker compose -f docker-compose.timeweb.yml up -d --build
 ```
 
-В панели задай `DATABASE_URL`, `DATABASE_SSL=true`, `SITE_URL`.
+В панели задай `DATABASE_URL`, `DATABASE_SSL=true`, `SITE_URL`, `SESSION_SECRET`.
 
 ## Деплой без Docker (VPS)
 
-Нужны Node 20+, PostgreSQL, reverse proxy (Nginx/Caddy), HTTPS, процесс через systemd/PM2.
+Нужны Node 22+, PostgreSQL, reverse proxy (Nginx/Caddy), HTTPS, процесс через systemd/PM2.
 
 ```bash
 npm ci
@@ -177,7 +180,7 @@ NPM-пакеты руками не качай — их ставит `npm ci`.
 ```nginx
 server {
   listen 80;
-  server_name a3group.ru www.a3group.ru;
+  server_name example.com www.example.com;
 
   location / {
     proxy_pass http://127.0.0.1:3000;
@@ -196,7 +199,7 @@ server {
 
 - Build: `npm run build`
 - Start: `npm start`
-- Node: 20+
+- Node: 22+
 - Env: `DATABASE_URL`, `SITE_URL`, опционально `DATABASE_SSL=true`, Telegram
 
 ## Telegram

@@ -5,25 +5,26 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import SocialFloatingWidget from "@/components/SocialFloatingWidget";
+import { EMAIL, PHONE_E164 } from "@/lib/contacts";
 
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "ratify — Накрутка живых отзывов на Яндекс.Картах, Google, 2ГИС",
+    default: "ratify — интернет-маркетинг: Яндекс.Директ, SEO, аудит сайта",
     template: "%s | ratify",
   },
   description:
-    "Профессиональная накрутка отзывов на Яндекс.Картах, Google Картах, 2ГИС, Zoon и Авито. Реальные отзывы от живых пользователей. От 120 ₽ за отзыв. Платите только за опубликованные.",
+    "Настройка Яндекс.Директа, SEO-продвижение, аудит сайта и продукта, ведение карточки в Яндекс.Бизнесе. Честные методы и понятная отчётность.",
   keywords:
-    "накрутка отзывов, отзывы на яндекс картах, отзывы google, накрутка 2гис, купить отзывы, живые отзывы, рейтинг на картах",
+    "настройка яндекс директ, seo продвижение, аудит сайта, яндекс бизнес, интернет-маркетинг, реклама в поиске",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "ratify — Накрутка живых отзывов на картах",
-    description: "Реальные отзывы от живых пользователей. От 120 ₽ за отзыв.",
+    title: "ratify — интернет-маркетинг",
+    description: "Яндекс.Директ, SEO, аудит сайта и ведение карточки на картах. Честные методы и понятная отчётность.",
     type: "website",
     url: siteUrl,
     siteName: "ratify",
@@ -33,6 +34,18 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: "ratify",
+  url: siteUrl,
+  description:
+    "Интернет-маркетинг: настройка Яндекс.Директа, SEO-продвижение, аудит сайта и ведение карточки в Яндекс.Бизнесе.",
+  telephone: PHONE_E164,
+  email: EMAIL,
+  availableLanguage: "Russian",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -47,68 +60,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Service",
-              "name": "Накрутка отзывов",
-              "provider": {
-                "@type": "Organization",
-                "name": "ratify",
-                "url": siteUrl,
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+79373717757",
-                  "email": "gipno262@gmail.com",
-                  "contactType": "Customer Service",
-                  "hoursAvailable": "Mo-Su 00:00-23:59",
-                  "availableLanguage": "Russian",
-                },
-              },
-              "description": "Профессиональная накрутка живых отзывов на Яндекс.Картах, Google Картах, 2ГИС, Zoon и Авито от реальных пользователей.",
-              "offers": {
-                "@type": "AggregateOffer",
-                "priceCurrency": "RUB",
-                "lowPrice": "120",
-                "highPrice": "1300",
-                "priceSpecification": [
-                  {
-                    "@type": "UnitPriceSpecification",
-                    "price": "350",
-                    "priceCurrency": "RUB",
-                    "name": "Яндекс.Карты",
-                    "referenceQuantity": {
-                      "@type": "QuantitativeValue",
-                      "value": "1",
-                      "unitCode": "review",
-                    },
-                  },
-                  {
-                    "@type": "UnitPriceSpecification",
-                    "price": "150",
-                    "priceCurrency": "RUB",
-                    "name": "Google Карты",
-                    "referenceQuantity": {
-                      "@type": "QuantitativeValue",
-                      "value": "1",
-                      "unitCode": "review",
-                    },
-                  },
-                  {
-                    "@type": "UnitPriceSpecification",
-                    "price": "120",
-                    "priceCurrency": "RUB",
-                    "name": "2ГИС",
-                    "referenceQuantity": {
-                      "@type": "QuantitativeValue",
-                      "value": "1",
-                      "unitCode": "review",
-                    },
-                  },
-                ],
-              },
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
       <body className="bg-[var(--surface-warm)] text-zinc-900 antialiased">

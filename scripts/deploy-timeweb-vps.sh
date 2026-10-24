@@ -10,7 +10,7 @@ APP_DIR="${APP_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$APP_DIR"
 
 if [[ ! -f .env ]]; then
-  echo "Создайте .env из .env.example и заполните SITE_URL, DATABASE_URL, TELEGRAM_*"
+  echo "Создайте .env из .env.example и заполните SITE_URL, POSTGRES_PASSWORD, SESSION_SECRET"
   cp -n .env.example .env 2>/dev/null || true
   echo "Файл .env создан — отредактируйте его и запустите скрипт снова."
   exit 1

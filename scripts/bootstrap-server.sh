@@ -1,32 +1,29 @@
 #!/usr/bin/env bash
-# Одноразовый деплой на VPS Timeweb Cloud.
-# Запуск на сервере (консоль Timeweb или ваш SSH):
-#   export SITE_URL=http://72.56.232.108:3000
-#   export TELEGRAM_BOT_TOKEN=...
-#   export TELEGRAM_CHAT_ID=...
+# Одноразовый деплой на VPS (Ubuntu/Debian) через Docker Compose.
+# Запуск на сервере:
+#   export SITE_URL=https://example.com
+#   export REPO=https://github.com/<user>/<repo>.git
+#   # необязательно: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 #   bash scripts/bootstrap-server.sh
+#
+# Повторный запуск безопасен: существующий .env НЕ перезаписывается
+# (иначе новый пароль БД не подошёл бы к уже созданному тому pgdata).
 
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/qqqweqw}"
-REPO="${REPO:-https://github.com/xiloeiwqq/qqqweqw.git}"
-SITE_URL="${SITE_URL:-http://72.56.232.108:3000}"
+APP_DIR="${APP_DIR:-/opt/ratify}"
+REPO="${REPO:-https://github.com/Esp47291/ratify.git}"
 PORT="${PORT:-3000}"
 
-require_var() {
-  if [[ -z "${!1:-}" ]]; then
-    echo "Переменная $1 обязательна" >&2
-    exit 1
-  fi
-}
-
-require_var TELEGRAM_BOT_TOKEN
-require_var TELEGRAM_CHAT_ID
+if [[ -z "${SITE_URL:-}" ]]; then
+  echo "Переменная SITE_URL обязательна (например, https://example.com)" >&2
+  exit 1
+fi
 
 echo "==> Обновление системы и установка зависимостей..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq git curl ca-certificates
+apt-get install -y -qq git curl ca-certificates openssl
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "==> Установка Docker..."
@@ -48,16 +45,22 @@ else
   git clone "$REPO" "$APP_DIR"
 fi
 
-echo "==> Создание .env..."
-cat > "$APP_DIR/.env" <<EOF
+if [[ -f "$APP_DIR/.env" ]]; then
+  echo "==> .env уже существует — оставляю без изменений."
+else
+  echo "==> Создание .env со сгенерированными секретами..."
+  umask 077
+  cat > "$APP_DIR/.env" <<ENVEOF
 SITE_URL=${SITE_URL}
-DATABASE_URL=postgresql://postgres:postgres@db:5432/app_db
+POSTGRES_PASSWORD=$(openssl rand -hex 24)
+SESSION_SECRET=$(openssl rand -hex 32)
 DATABASE_SSL=false
 PORT=${PORT}
-TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
 TELEGRAM_PROXY=
-EOF
+ENVEOF
+fi
 
 echo "==> Сборка и запуск Docker Compose..."
 cd "$APP_DIR"
@@ -77,12 +80,6 @@ for i in $(seq 1 36); do
   fi
 done
 
-echo "==> Тест заявки + Telegram..."
-curl -sf -X POST "http://127.0.0.1:${PORT}/api/leads" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Deploy Test","phone":"+79990000000","type":"order","message":"bootstrap check"}' \
-  | tee /tmp/lead-test.json
-
 echo ""
 echo "Готово: ${SITE_URL}"
-echo "Проверьте Telegram — должно прийти сообщение «Deploy Test»."
+echo "Порт БД наружу не открыт. Секреты лежат в ${APP_DIR}/.env (права 600) — не коммитьте файл."

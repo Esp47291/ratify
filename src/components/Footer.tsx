@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { Mail, Phone, MessageCircle } from "lucide-react";
 import { EMAIL, EMAIL_MAILTO, PHONE_DISPLAY, PHONE_TEL, TELEGRAM_HANDLE, TELEGRAM_URL } from "@/lib/contacts";
+import { services } from "@/lib/services-data";
+
+const company = [
+  { name: "О нас", href: "/about" },
+  { name: "Цены", href: "/prices" },
+  { name: "Калькулятор", href: "/calculator" },
+  { name: "Гарантии", href: "/guarantees" },
+  { name: "FAQ", href: "/faq" },
+  { name: "Контакты", href: "/contacts" },
+];
 
 export default function Footer() {
   return (
@@ -12,24 +22,18 @@ export default function Footer() {
               <span className="text-white font-bold text-lg tracking-tight">ratify</span>
             </Link>
             <p className="text-sm leading-relaxed text-zinc-500 mb-6 max-w-xs">
-              Живые отзывы на картах и площадках. Платите только за опубликованные. Работаем с DNS и крупными компаниями по договору, 24/7.
+              Интернет-маркетинг: Яндекс.Директ, SEO, аудит сайта и ведение карточек на картах. Работаем честными
+              методами и показываем цифры.
             </p>
           </div>
 
           <div>
             <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Услуги</h4>
             <ul className="space-y-2.5">
-              {[
-                { name: "Яндекс.Карты", href: "/services/yandex" },
-                { name: "Google Карты", href: "/services/google" },
-                { name: "2ГИС", href: "/services/2gis" },
-                { name: "Zoon", href: "/services/zoon" },
-                { name: "Авито", href: "/services/avito" },
-                { name: "Другие площадки", href: "/services/other" },
-              ].map((s) => (
-                <li key={s.href}>
-                  <Link href={s.href} className="text-sm hover:text-white transition-colors">
-                    {s.name}
+              {services.map((s) => (
+                <li key={s.slug}>
+                  <Link href={`/services/${s.slug}`} className="text-sm hover:text-white transition-colors">
+                    {s.title}
                   </Link>
                 </li>
               ))}
@@ -39,15 +43,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Компания</h4>
             <ul className="space-y-2.5">
-              {[
-                { name: "О нас", href: "/about" },
-                { name: "Кейсы", href: "/cases" },
-                { name: "Цены", href: "/prices" },
-                { name: "Калькулятор", href: "/calculator" },
-                { name: "Гарантии", href: "/guarantees" },
-                { name: "FAQ", href: "/faq" },
-                { name: "Контакты", href: "/contacts" },
-              ].map((item) => (
+              {company.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className="text-sm hover:text-white transition-colors">
                     {item.name}
