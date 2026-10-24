@@ -13,7 +13,7 @@ copy .env.example .env
 docker compose up -d --build
 ```
 
-Папка называется `мой сайт` — из‑за кириллицы Compose раньше ругался `project name must not be empty`. В `docker-compose.yml` уже прописано `name: ratify`, обычная команда выше должна работать. Запасной вариант: `docker compose -p ratify up -d --build`.
+Имя проекта Compose задано в `docker-compose.yml` (`name: ratify`), поэтому команда работает из папки с любым названием. Если Compose всё же ругается `project name must not be empty`, укажите имя явно: `docker compose -p ratify up -d --build`.
 
 Сайт: http://localhost:3000  
 Проверка: http://localhost:3000/api/health
@@ -65,7 +65,6 @@ docker compose down -v         # остановить и стереть данн
 | `src/lib/` | Данные услуг (`services-data.ts`), расчёт бюджета, Telegram, ссылки, телефоны |
 | `public/` | Картинки и иконки, которые отдаются как есть |
 | `scripts/` | SQL для создания таблиц, скрипты деплоя |
-| `icons/` | Исходники иконок (дубли в `public/icons`) |
 
 ### Сервисы в Docker (`docker-compose.yml`)
 
